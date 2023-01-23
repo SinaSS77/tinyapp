@@ -15,6 +15,10 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
+app.get("/hello", (req, res) => {
+  res.send(`<html><body><h1>This is our home page</h1><br><h3><i>Welcome!</i></h3></body></html>\n`);
+})
+
 app.listen(PORT, (req, res) =>{
   console.log(`The port is : ${PORT}`);
 });
