@@ -34,24 +34,41 @@ const generateRandomString = function() {
 
 
 const users = {
-  // userID: {
-  //   id: "userRandomID",
-  //   email: "user@example.com",
-  //   password: "purple-monkey-dinosaur",
-  // },
+  userID: {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur",
+  },
 
 };
+
+const getUserByEmail = (email) => {
+  
+  for (let key in users) {
+    console.log(key);
+    if (users[key].email === email) {
+      return key;
+    }
+  }
+  return null;
+};
+
 app.post("/register",(req,res) => {
   let email = req.body.email;
   let password = req.body.password;
-
+  if (!email || !password) {
+    res.status(400).send("You can not leave the password or email boxes empty!");
+  }
+  if (!getUserByEmail(email)) {
   //1. Generating the new random ID
-  const id = generateRandomString();
-  //2. Create a new user in the users Database
-  users[id] = {id, email, password};
-  
-  res.cookie("user_id", id);
-  res.redirect('/urls');
+    const id = generateRandomString();
+    //2. Create a new user in the users Database
+    users[id] = {id, email, password};
+
+    res.cookie("user_id", id);
+    res.redirect('/urls');
+  }
+  res.status(400).send("This email already exists. Either please log in with or choose another email address.");
 });
 
 app.get("/register", (req,res) => {
