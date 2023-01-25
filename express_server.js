@@ -17,6 +17,7 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+
 // a function to generate 6length random string as our shortURL (id)
 const generateRandomString = function() {
   let characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -27,21 +28,57 @@ const generateRandomString = function() {
   return randomString;
 };
 
+
 /***********   ROUTS */
 /******************* */
 
+
+const users = {
+  // userID: {
+  //   id: "userRandomID",
+  //   email: "user@example.com",
+  //   password: "purple-monkey-dinosaur",
+  // },
+
+};
+app.post("/register",(req,res) => {
+  let email = req.body.email;
+  let password = req.body.password;
+
+  //1. Generating the new random ID
+  const id = generateRandomString();
+  //2. Create a new user in the users Database
+  users[id] = {id, email, password};
+  
+  res.cookie("user_id", id);
+  res.redirect('/urls');
+});
+
+app.get("/register", (req,res) => {
+  let templateVars = {user: null};
+  res.render("urls_register", templateVars);
+});
+
+
+
+
 //getting any responce to route urls and rendering by ejs
 app.get("/urls", (req, res) => {
-  const templateVars = { username: req.cookies["username"],urls: urlDatabase };
+  const id = req.cookies.user_id;
+  const user = users[id];
+
+  const templateVars = {user,urls: urlDatabase};
   res.render("urls_index", templateVars);
 });
 
 //getting any responce to route urls/news and rendering by ejs (for the submition page)
 app.get("/urls/new", (req, res) => {
-  const templateVars = { username: req.cookies["username"]};
+  const id = req.cookies.user_id;
+  const user = users[id];
+
+  const templateVars = {user};
   res.render("urls_new", templateVars);
 });
-
 
 // app.get("/", (req, res) => {
 //   res.send("This is our home page, Welcome!");
@@ -55,14 +92,20 @@ app.get("/urls/new", (req, res) => {
 
 // this is for redirecting from POST route to this page to show the user the short links
 app.get("/urls/:id", (req, res) => {
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id], username: req.cookies["username"]};
+  const id = req.cookies.user_id;
+  const user = users[id];
+
+  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id], user: user};
   res.render("urls_show", templateVars);
 });
+
 // inside the urls_show.ejs it is defined in the anchor link that by click on the shortURLs it should go to the /u/:id. and inside of this we define that it should redirect to the longURL
+
 app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id];
   res.redirect(longURL);
 });
+
 
 
 /***********   POSTS */
@@ -99,11 +142,15 @@ app.post("/login",(req,res) => {
   res.redirect('/urls');
 });
 
+
+
 // a post to handle the logout form in the header
 app.post("/logout", (req, res) => {
   res.clearCookie('username');
-  res.redirect("/urls");
+  res.redirect("/register");
 });
+
+
 
 app.listen(PORT, (req, res) =>{
   console.log(`The port is : ${PORT}`);
