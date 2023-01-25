@@ -1,7 +1,10 @@
 // Using the Express after installing it by npm
 const express = require('express');
+// Using the cookie-parser after installing it by npm
+const cookieParser = require('cookie-parser');
 
 const app = express();
+app.use(cookieParser());
 //defining the port
 const PORT = 8080;
 
@@ -29,31 +32,30 @@ const generateRandomString = function() {
 
 //getting any responce to route urls and rendering by ejs
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  const templateVars = { username: req.cookies["username"],urls: urlDatabase };
   res.render("urls_index", templateVars);
 });
 
 //getting any responce to route urls/news and rendering by ejs (for the submition page)
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const templateVars = { username: req.cookies["username"]};
+  res.render("urls_new", templateVars);
 });
 
 
-app.get("/", (req, res) => {
-  res.send("This is our home page, Welcome!");
-});
-
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
-});
-
-app.get("/hello", (req, res) => {
-  res.send(`<html><body><h1>This is our home page</h1><br><h3><i>Welcome!</i></h3></body></html>\n`);
-});
+// app.get("/", (req, res) => {
+//   res.send("This is our home page, Welcome!");
+// });
+// app.get("/urls.json", (req, res) => {
+//   res.json(urlDatabase);
+// });
+// app.get("/hello", (req, res) => {
+//   res.send(`<html><body><h1>This is our home page</h1><br><h3><i>Welcome!</i></h3></body></html>\n`);
+// });
 
 // this is for redirecting from POST route to this page to show the user the short links
 app.get("/urls/:id", (req, res) => {
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id] };
+  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id], username: req.cookies["username"]};
   res.render("urls_show", templateVars);
 });
 // inside the urls_show.ejs it is defined in the anchor link that by click on the shortURLs it should go to the /u/:id. and inside of this we define that it should redirect to the longURL
@@ -93,7 +95,7 @@ app.post("/urls/:id", (req, res) => {
 // a post to handle the login form value
 app.post("/login",(req,res) => {
   const username = req.body.username;
-  res.cookie("User Name:",username);   //by setting this we can find the username under chrome Devtools:Application:Cookies
+  res.cookie("username",username);   //by setting this we can find the username under chrome Devtools:Application:Cookies
   res.redirect('/urls');
 });
 

@@ -17,7 +17,21 @@
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
-      <div class="nav-item" style="position:absolute; right:50px">
+
+      <div
+        class="nav-item"
+        style="display: flex; margin-left: auto; margin-right: 20px; "
+      >
+      <div class="collapse navbar-collapse">
+        <div class="navbar-nav">
+          <p
+            class="nav-item"
+            style="display: flex;font-weight: bolder;text-shadow: 1px 1px khaki; margin-left: auto; margin-right: 20px; margin-top: 15px;"
+          >
+            User Name:   (<%=   username %>)
+          </p>
+        </div>
+      </div>
         <form class="form-inline" action="/login" method="POST">
           <div class="form-group">
             <label for="username"></label>
@@ -26,11 +40,12 @@
               type="text"
               name="username"
               placeholder="Enter your username:"
-              style="width: 300px; margin: 1em; "
+              style="width: 300px; margin: 1em"
             />
             <button type="submit" class="btn btn-primary">Submit</button>
           </div>
         </form>
+     
       </div>
     </div>
   </nav>
