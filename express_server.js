@@ -28,11 +28,6 @@ const generateRandomString = function() {
   return randomString;
 };
 
-
-/***********   ROUTS */
-/******************* */
-
-
 const users = {
   userID: {
     id: "userRandomID",
@@ -52,32 +47,6 @@ const getUserByEmail = (email) => {
   }
   return null;
 };
-
-app.post("/register",(req,res) => {
-  let email = req.body.email;
-  let password = req.body.password;
-  if (!email || !password) {
-    res.status(400).send("You can not leave the password or email boxes empty!");
-  }
-  if (!getUserByEmail(email)) {
-  //1. Generating the new random ID
-    const id = generateRandomString();
-    //2. Create a new user in the users Database
-    users[id] = {id, email, password};
-
-    res.cookie("user_id", id);
-    res.redirect('/urls');
-  }
-  res.status(400).send("This email already exists. Either please log in with or choose another email address.");
-});
-
-app.get("/register", (req,res) => {
-  let templateVars = {user: null};
-  res.render("urls_register", templateVars);
-});
-
-
-
 
 //getting any responce to route urls and rendering by ejs
 app.get("/urls", (req, res) => {
@@ -123,6 +92,10 @@ app.get("/u/:id", (req, res) => {
   res.redirect(longURL);
 });
 
+app.get("/register", (req,res) => {
+  let templateVars = {user: null};
+  res.render("urls_register", templateVars);
+});
 
 
 /***********   POSTS */
@@ -159,18 +132,31 @@ app.post("/login",(req,res) => {
   res.redirect('/urls');
 });
 
-
-
 // a post to handle the logout form in the header
 app.post("/logout", (req, res) => {
   res.clearCookie('username');
   res.redirect("/register");
 });
 
+app.post("/register",(req,res) => {
+  let email = req.body.email;
+  let password = req.body.password;
+  if (!email || !password) {
+    res.status(400).send("You can not leave the password or email boxes empty!");
+  }
+  if (!getUserByEmail(email)) {
+  //1. Generating the new random ID
+    const id = generateRandomString();
+    //2. Create a new user in the users Database
+    users[id] = {id, email, password};
 
+    res.cookie("user_id", id);
+    res.redirect('/urls');
+    return;
+  }
+  res.status(400).send("This email already exists. Either please log in with or choose another email address.");
+});
 
 app.listen(PORT, (req, res) =>{
   console.log(`The port is : ${PORT}`);
 });
-
-// test amend
