@@ -90,6 +90,13 @@ app.post("/urls/:id", (req, res) => {
   res.redirect(`/urls`);
 });
 
+// a post to handle the login form value
+app.post("/login",(req,res) => {
+  const username = req.body.username;
+  res.cookie("User Name:",username);   //by setting this we can find the username under chrome Devtools:Application:Cookies
+  res.redirect('/urls');
+});
+
 app.listen(PORT, (req, res) =>{
   console.log(`The port is : ${PORT}`);
 });
