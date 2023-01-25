@@ -99,6 +99,12 @@ app.post("/login",(req,res) => {
   res.redirect('/urls');
 });
 
+// a post to handle the logout form in the header
+app.post("/logout", (req, res) => {
+  res.clearCookie('username');
+  res.redirect("/urls");
+});
+
 app.listen(PORT, (req, res) =>{
   console.log(`The port is : ${PORT}`);
 });

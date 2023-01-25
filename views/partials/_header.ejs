@@ -1,37 +1,33 @@
 <header>
   <nav class="navbar navbar-expand-md navbar-dark bg-success">
     <a class="navbar-brand" href="/urls">TinyApp</a>
-    <button
-      class="navbar-toggler"
-      type="button"
-      data-toggle="collapse"
-      data-target="#navbarNavAltMarkup"
-      aria-controls="navbarNavAltMarkup"
-      aria-expanded="false"
-      aria-label="Toggle navigation"
-    >
-      <span class="navbar-toggler-icon"></span>
-    </button>
+   
+    <% if (username) { %>
     <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
       <div class="navbar-nav">
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
 
+
+      <div class="nav-item"
+      style="display: flex; margin-left: auto; margin-right: 20px; ">
+        <p class="nav-item"
+        style="display: flex;font-weight: bolder;text-shadow: 1px 1px khaki; margin-left: auto; margin-right: 20px; margin-top: 15px;">Logged In As: <%= username %></p>
+      </div>
+      <form class="logout" action="/logout" method="POST">
+        <button type="submit" class="btn btn-primary">logout</button>
+      </form>
+      <a class="navbar-brand" href="/logout"></a>
+
+
+      <% } else { %>
+
       <div
         class="nav-item"
         style="display: flex; margin-left: auto; margin-right: 20px; "
       >
-      <div class="collapse navbar-collapse">
-        <div class="navbar-nav">
-          <p
-            class="nav-item"
-            style="display: flex;font-weight: bolder;text-shadow: 1px 1px khaki; margin-left: auto; margin-right: 20px; margin-top: 15px;"
-          >
-            User Name:   (<%=   username %>)
-          </p>
-        </div>
-      </div>
+         </div>
         <form class="form-inline" action="/login" method="POST">
           <div class="form-group">
             <label for="username"></label>
@@ -47,6 +43,12 @@
         </form>
      
       </div>
+
+      <% } %>
     </div>
+
+
+
+
   </nav>
 </header>
