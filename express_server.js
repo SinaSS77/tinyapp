@@ -5,7 +5,6 @@ const cookieParser = require('cookie-parser');
 
 const app = express();
 app.use(cookieParser());
-//defining the port
 const PORT = 8080;
 
 app.use(express.urlencoded({ extended: true })); //will translate, or parse the body  and make it readable for us humans. This feature is part of Express.
@@ -28,17 +27,9 @@ const generateRandomString = function() {
   return randomString;
 };
 
-const users = {
-  userID: {
-    id: "userRandomID",
-    email: "user@example.com",
-    password: "purple-monkey-dinosaur",
-  },
-
-};
+const users = {};
 
 const getUserByEmail = (email) => {
-  
   for (let key in users) {
     console.log(key);
     if (users[key].email === email) {
@@ -47,6 +38,10 @@ const getUserByEmail = (email) => {
   }
   return null;
 };
+
+
+/***********   ROUTS: GET */
+/************************ */
 
 //getting any responce to route urls and rendering by ejs
 app.get("/urls", (req, res) => {
@@ -98,14 +93,14 @@ app.get("/register", (req,res) => {
 });
 
 app.get("/login", (req,res) => {
-
   let templateVars = {user: null};
   res.render("urls_login", templateVars);
 });
 
 
-/***********   POSTS */
-/******************* */
+
+/***********   ROUTS : POSTS */
+/*************************** */
 
 //by clicking on the Submit button we use from these things :action, name and method to post our reqest and implement functions and store the shortURL and redirect to /urls/:id
 app.post("/urls", (req, res) => {
@@ -139,19 +134,19 @@ app.post("/login",(req,res) => {
   
   for (let key in users) {
     if (email === users[key].email && password === users[key].password) {
-      res.cookie("user_id",users[key].id);   //by setting this we can find the username under chrome Devtools:Application:Cookies
+      res.cookie("user_id",users[key].id);   //by setting this we can find the user_id under chrome Devtools:Application:Cookies
       res.redirect("/urls");
       return;
     }
   }
-  res.status(400).send("Either your email address or your password is incorrect!");
+  res.status(403).send("Either your email address or your password is incorrect!");
   
 });
 
 // a post to handle the logout form in the header
 app.post("/logout", (req, res) => {
-  res.clearCookie('username');
-  res.redirect("/register");
+  res.clearCookie('user_id');
+  res.redirect("/login");
 });
 
 app.post("/register",(req,res) => {

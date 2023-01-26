@@ -19,28 +19,28 @@
   </head>
 
   <body>
-    <%- include('partials/_header',{username : "username"}) %>
-    <main class="main-login" style="margin: 1em">
-      <h3>😊 Login to TinyApp 🤠</h3>
-      <form class="form-inline" action="/login" method="POST">
-        <div class="form-group mb-2">
-          <label for="loginEmail">Enter your email address here:</label>
+    <%- include('partials/_header') %>
+  
+    <main class="main-login">
+      <h2 style="margin: 2rem 1rem;" >Login to TinyApp:</h2>
+
+      <form class="form-inline" action="/login" method="POST" style="display:block">
+          <label for="loginEmail" style="width: 200px; margin: 1em;">Enter your email address:</label>
           <input
             class="form-control"
             type="email"
             name="email"
             placeholder="user@email.com"
-            style="width: 300px; margin: 1em"
+            style="width: 300px; margin: 0.2em 0em 0.5em 1em;"
           />
           
-          <label for="loginPassword">Enter your password here:</label>
+          <label for="loginPassword" style="width:160px; margin: 1em;">Enter your password :</label>
           <input
-            class="form-control"
             type="password"
             name="password"
-            style="width: 300px; margin: 1em"
+            style="width: 300px; margin: 0.2em 0em 0.5em 1em;"
           />
-          <button type="submit" class="btn-dark btn-outline-danger">Login</button>
+          <button type="submit" class="btn btn-secondary" style="margin: 0.2em 1em 0.5em 1em">Login</button>
         </div>
       </form>
     </main>
