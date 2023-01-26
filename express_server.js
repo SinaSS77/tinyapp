@@ -97,6 +97,12 @@ app.get("/register", (req,res) => {
   res.render("urls_register", templateVars);
 });
 
+app.get("/login", (req,res) => {
+
+  let templateVars = {user: null};
+  res.render("urls_login", templateVars);
+});
+
 
 /***********   POSTS */
 /******************* */
@@ -127,9 +133,19 @@ app.post("/urls/:id", (req, res) => {
 
 // a post to handle the login form value
 app.post("/login",(req,res) => {
-  const username = req.body.username;
-  res.cookie("username",username);   //by setting this we can find the username under chrome Devtools:Application:Cookies
-  res.redirect('/urls');
+  
+  let email = req.body.email;
+  let password = req.body.password;
+  
+  for (let key in users) {
+    if (email === users[key].email && password === users[key].password) {
+      res.cookie("user_id",users[key].id);   //by setting this we can find the username under chrome Devtools:Application:Cookies
+      res.redirect("/urls");
+      return;
+    }
+  }
+  res.status(400).send("Either your email address or your password is incorrect!");
+  
 });
 
 // a post to handle the logout form in the header
@@ -156,6 +172,11 @@ app.post("/register",(req,res) => {
   }
   res.status(400).send("This email already exists. Either please log in with or choose another email address.");
 });
+
+
+
+
+
 
 app.listen(PORT, (req, res) =>{
   console.log(`The port is : ${PORT}`);
