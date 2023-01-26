@@ -37,4 +37,4 @@ const getUserByEmail = (email, users) => {
   return null;
 };
 
-module.exports = { getUserByEmail, getUserById, urlsForUser, emailExists, getRandomString }; 
+module.exports = { getRandomString, getUserById, getUserByEmail, urlsForUser};
