@@ -1,15 +1,17 @@
-// Using the Express after installing it by npm
-const express = require('express');
-const bcrypt = require('bcryptjs');
-const {getUserByEmail ,getUserById, urlsForUser, getRandomString} = require("./functions");
 
+const cookieSession = require('cookie-session');
+const express = require('express');// Using the Express after installing it by npm
+const {getUserByEmail ,getUserById, urlsForUser, getRandomString} = require("./functions");
+const bcrypt = require('bcryptjs');
 const app = express();
 const PORT = 8080;
-// Using the cookie-parser after installing it by npm
-const cookieParser = require('cookie-parser');
-
-app.use(cookieParser());
+// const cookieParser = require('cookie-parser');// Using the cookie-parser after installing it by npm
+// app.use(cookieParser());// we exchange this one with the cookie-session
 app.use(express.urlencoded({ extended: true })); //will translate, or parse the body  and make it readable for us humans. This feature is part of Express.
+app.use(cookieSession({//after installing the cookie-session to save the cookies in a secure way
+  name: 'session',
+  keys: ["SunnyDays"]
+}));
 app.set("view engine", "ejs"); //for using the templates in the views folder after insalling the EJS by npm
 
 
@@ -24,7 +26,7 @@ const users = {};
 
 // for homepage
 app.get("/", (req, res) => {
-  if (req.cookies.user_id) {
+  if (req.session.user_id) {
     res.redirect("/urls");
   } else {
     res.redirect("/login");
@@ -51,7 +53,7 @@ app.post("/register",(req,res) => {
     //2. Create a new user in the users Database
     users[id] = {id, email, hashedPassword};
     // console.log("==============>>>>",users);
-    res.cookie("user_id", id);
+    req.session.user_id = id;
     res.redirect('/urls');
     return;
   }
@@ -77,7 +79,7 @@ app.post("/login",(req,res) => {
   }
   for (let key in users) {
     if (email === users[key].email && bcrypt.compareSync(req.body.password , password)) {
-      res.cookie("user_id",users[key].id);   //by setting this we can find the user_id under chrome Devtools:Application:Cookies
+      res.session("user_id",users[key].id);   //by setting this we can find the user_id under chrome Devtools:Application:Cookies
       res.redirect("/urls");
       return;
     }
@@ -87,13 +89,13 @@ app.post("/login",(req,res) => {
 
 // a post to handle the logout form in the header
 app.post("/logout", (req, res) => {
-  res.clearCookie('user_id');
+  req.session = null;
   res.redirect("/login");
 });
 
 //a page for showing the urls
 app.get("/urls", (req, res) => {
-  const userID = req.cookies.user_id;
+  const userID = req.session.user_id;
   const usersURLs = urlsForUser(userID, urlDatabase);
   const user = getUserById(userID, users);
   if (!user) {
@@ -110,7 +112,7 @@ app.get("/urls", (req, res) => {
 //by clicking on the Submit button we use from these things :action, name and method to post our reqest and implement functions and store the shortURL and redirect to /urls/:id
 app.post("/urls", (req, res) => {
   const shortURL = getRandomString();
-  const userID = req.cookies.user_id;
+  const userID = req.session.user_id;
   const user = getUserById(userID, users);
   if (user) {
     urlDatabase[shortURL] = {
@@ -128,7 +130,7 @@ app.post("/urls", (req, res) => {
 
 //getting any responce to route urls/news and rendering by ejs (for the submition page)
 app.get("/urls/new", (req, res) => {
-  const userID = req.cookies.user_id;
+  const userID = req.session.user_id;
   const user = getUserById(userID, users);
   if (user === null) {
     return res.redirect("/login");
@@ -152,7 +154,7 @@ app.get("/u/:id", (req, res) => {
 // this is for redirecting from POST route to this page to show the user short links
 app.get("/urls/:id", (req, res) => {
   let templateVars = {};
-  const userID = req.cookies.user_id;
+  const userID = req.session.user_id;
 
   if (userID) {
     const userURLs = urlsForUser(userID, urlDatabase);
@@ -171,7 +173,7 @@ app.get("/urls/:id", (req, res) => {
 });
 
 app.post("/urls/:id", (req, res) => {
-  const userID = req.cookies.user_id;
+  const userID = req.session.user_id;
   if (!userID) {
     return res.status(400).send("You may not logged in!");
   } else {
@@ -187,7 +189,7 @@ app.post("/urls/:id", (req, res) => {
 });
 
 app.post("/urls/:id/delete", (req, res) => {
-  const userID = req.cookies.user_id;
+  const userID = req.session.user_id;
   if (!userID) {
     return res.status(400).send("You are only allowed to delete your own URLs!");
   } else {
