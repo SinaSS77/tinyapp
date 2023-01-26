@@ -1,22 +1,14 @@
 // Using the Express after installing it by npm
 const express = require('express');
+const bcrypt = require('bcryptjs');
+const {getUserByEmail ,getUserById, urlsForUser, getRandomString} = require("./functions");
+
 const app = express();
 const PORT = 8080;
 // Using the cookie-parser after installing it by npm
 const cookieParser = require('cookie-parser');
 
-
 app.use(cookieParser());
-
-
-const {
-  getUserByEmail,
-  getUserById,
-  urlsForUser,
-  emailExists,
-  getRandomString,
-} = require("./functions");
-
 app.use(express.urlencoded({ extended: true })); //will translate, or parse the body  and make it readable for us humans. This feature is part of Express.
 app.set("view engine", "ejs"); //for using the templates in the views folder after insalling the EJS by npm
 
@@ -32,7 +24,7 @@ const users = {};
 
 // for homepage
 app.get("/", (req, res) => {
-  if (req.session.user_id) {
+  if (req.cookies.user_id) {
     res.redirect("/urls");
   } else {
     res.redirect("/login");
@@ -49,16 +41,16 @@ app.get("/register", (req,res) => {
 //reading the user information with (req.body)  AND   sending the information to the cookie with (res.cookie) and redirect to /urls
 app.post("/register",(req,res) => {
   let email = req.body.email;
-  let password = req.body.password;
-  if (!email || !password) {
+  const hashedPassword = bcrypt.hashSync((req.body.password),10);
+  if (!email || !hashedPassword) {
     res.status(400).send("You can not leave the password or email boxes empty!");
   }
   if (!getUserByEmail(email)) {
   //1. Generating the new random ID
     const id = getRandomString();
     //2. Create a new user in the users Database
-    users[id] = {id, email, password};
-
+    users[id] = {id, email, hashedPassword};
+    // console.log("==============>>>>",users);
     res.cookie("user_id", id);
     res.redirect('/urls');
     return;
@@ -75,7 +67,7 @@ app.get("/login", (req,res) => {
 // a post to handle the login form value
 app.post("/login",(req,res) => {
   const email = req.body.email;
-  const password = req.body.password;
+  const password = bcrypt.hashSync((req.body.password),10);
   const userID = getUserByEmail(email, users);
   if (!email || !password) {
     return res.status(400).send("Please enter a valid email and valid password");
@@ -84,7 +76,7 @@ app.post("/login",(req,res) => {
     return res.status(400).send("Your email is not in registered in this website!");
   }
   for (let key in users) {
-    if (email === users[key].email && password === users[key].password) {
+    if (email === users[key].email && bcrypt.compareSync(req.body.password , password)) {
       res.cookie("user_id",users[key].id);   //by setting this we can find the user_id under chrome Devtools:Application:Cookies
       res.redirect("/urls");
       return;
@@ -125,7 +117,7 @@ app.post("/urls", (req, res) => {
       userID: userID,
       longURL: req.body.longURL,
     };
-    console.log("=======>>>> ", urlDatabase);
+    // console.log("=======>>>> ", urlDatabase);
     res.redirect(`/urls/${shortURL}`);
     return;
   } else {
@@ -216,20 +208,6 @@ app.post("/urls/:id/delete",(req,res) =>{
   delete urlDatabase[req.params.id];
   res.redirect(`/urls`);
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 app.listen(PORT, (req, res) =>{

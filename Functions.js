@@ -19,15 +19,6 @@ const getRandomString = () => {
   return randomCharsStr;
 };
 
-//create a function to look up if email already exist
-const emailExists = (emailAddress, users) => { // james justs added users
-  for (const user in users) {
-    if (emailAddress === users[user].email) {
-      return true;
-    }
-  }
-};
-
 const getUserById = (id, users) => { // returns an object
   const user = users[id];
   if (user) {
