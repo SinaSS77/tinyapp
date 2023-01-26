@@ -7,6 +7,14 @@ const app = express();
 app.use(cookieParser());
 const PORT = 8080;
 
+const {
+  getUserByEmail,
+  getUserById,
+  urlsForUser,
+  emailExists,
+  getRandomString,
+} = require("./functions");
+
 app.use(express.urlencoded({ extended: true })); //will translate, or parse the body  and make it readable for us humans. This feature is part of Express.
 app.set("view engine", "ejs"); //for using the templates in the views folder after insalling the EJS by npm
 
@@ -16,30 +24,8 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
-
 // a function to generate 6length random string as our shortURL (id)
-const generateRandomString = function() {
-  let characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let randomString = "";
-  for (let i = 0; i < 6; i++) {
-    randomString += characters.charAt(Math.floor(Math.random() * characters.length));
-  }
-  return randomString;
-};
-
 const users = {};
-
-const getUserByEmail = (email) => {
-  for (let key in users) {
-    console.log(key);
-    if (users[key].email === email) {
-      return key;
-    }
-  }
-  return null;
-};
-
-
 /***********   ROUTS: GET */
 /************************ */
 
@@ -47,17 +33,34 @@ const getUserByEmail = (email) => {
 app.get("/urls", (req, res) => {
   const id = req.cookies.user_id;
   const user = users[id];
+  if (!user) {
+    return res.redirect("/login");
+  } else {
+    const templateVars = {user,urls: urlDatabase};
+    return res.render("urls_index", templateVars);
+  }
 
-  const templateVars = {user,urls: urlDatabase};
-  res.render("urls_index", templateVars);
 });
 
 //getting any responce to route urls/news and rendering by ejs (for the submition page)
-app.get("/urls/new", (req, res) => {
-  const id = req.cookies.user_id;
-  const user = users[id];
+// app.get("/urls/new", (req, res) => {
+//   const id = req.cookies.user_id;
+//   const user = users[id];
 
-  const templateVars = {user};
+//   const templateVars = {user};
+//   res.render("urls_new", templateVars);
+// });
+
+app.get("/urls/new", (req, res) => {
+  const userID = req.cookies.user_id;
+  const user = getUserById(userID, users);
+  if (user === null) {
+    return res.redirect("/login");
+  }
+  const templateVars = {
+    urls: urlDatabase,
+    user: users[userID],
+  };
   res.render("urls_new", templateVars);
 });
 
@@ -72,10 +75,11 @@ app.get("/urls/new", (req, res) => {
 // });
 
 // this is for redirecting from POST route to this page to show the user the short links
+
 app.get("/urls/:id", (req, res) => {
   const id = req.cookies.user_id;
   const user = users[id];
-
+  console.log("------------>>", req.params.id);
   const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id], user: user};
   res.render("urls_show", templateVars);
 });
@@ -83,8 +87,13 @@ app.get("/urls/:id", (req, res) => {
 // inside the urls_show.ejs it is defined in the anchor link that by click on the shortURLs it should go to the /u/:id. and inside of this we define that it should redirect to the longURL
 
 app.get("/u/:id", (req, res) => {
-  const longURL = urlDatabase[req.params.id];
-  res.redirect(longURL);
+  if (req.params.id) {
+    const longURL = urlDatabase[req.params.id];
+    res.redirect(longURL);
+    return;
+  }
+  res.status(400).send("To see the urls, you have to first login");
+  return;
 });
 
 app.get("/register", (req,res) => {
@@ -104,14 +113,17 @@ app.get("/login", (req,res) => {
 
 //by clicking on the Submit button we use from these things :action, name and method to post our reqest and implement functions and store the shortURL and redirect to /urls/:id
 app.post("/urls", (req, res) => {
-  const shortURL = generateRandomString();
-  console.log(req.body); // Log the POST request body to the console
-  console.log(shortURL);
-  const longURL = req.body.longURL;
-  urlDatabase[shortURL] = longURL;
-  console.log(urlDatabase);
-  res.redirect(`/urls/${shortURL}`);
-  // res.send("Ok"); // Respond with 'Ok' (we will replace this)
+  const shortURL = getRandomString();
+  const userID = req.cookies.user_id;
+  const user = getUserById(userID, users);
+  if (user) {
+    urlDatabase[shortURL] = req.body.longURL,
+    res.redirect(`/urls/${shortURL}`);
+    return;
+  } else {
+    res.status(400).send("To see the urls, you have to first login");
+    return;
+  }
 });
 
 app.post("/urls/:shortURL/delete",(req,res) =>{
@@ -157,7 +169,7 @@ app.post("/register",(req,res) => {
   }
   if (!getUserByEmail(email)) {
   //1. Generating the new random ID
-    const id = generateRandomString();
+    const id = getRandomString();
     //2. Create a new user in the users Database
     users[id] = {id, email, password};
 
@@ -167,11 +179,6 @@ app.post("/register",(req,res) => {
   }
   res.status(400).send("This email already exists. Either please log in with or choose another email address.");
 });
-
-
-
-
-
 
 app.listen(PORT, (req, res) =>{
   console.log(`The port is : ${PORT}`);
