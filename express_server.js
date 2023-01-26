@@ -1,11 +1,13 @@
 // Using the Express after installing it by npm
 const express = require('express');
+const app = express();
+const PORT = 8080;
 // Using the cookie-parser after installing it by npm
 const cookieParser = require('cookie-parser');
 
-const app = express();
+
 app.use(cookieParser());
-const PORT = 8080;
+
 
 const {
   getUserByEmail,
@@ -18,149 +20,33 @@ const {
 app.use(express.urlencoded({ extended: true })); //will translate, or parse the body  and make it readable for us humans. This feature is part of Express.
 app.set("view engine", "ejs"); //for using the templates in the views folder after insalling the EJS by npm
 
-//Temporary using an object instead of database
-const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
-};
 
-// a function to generate 6length random string as our shortURL (id)
+/////////+++++++++ NECESSARY DATABASE++++++++++++
+//using an object instead of url-database and users
+const urlDatabase = {};
 const users = {};
+
+
 /***********   ROUTS: GET */
 /************************ */
 
-//getting any responce to route urls and rendering by ejs
-app.get("/urls", (req, res) => {
-  const id = req.cookies.user_id;
-  const user = users[id];
-  if (!user) {
-    return res.redirect("/login");
+// for homepage
+app.get("/", (req, res) => {
+  if (req.session.user_id) {
+    res.redirect("/urls");
   } else {
-    const templateVars = {user,urls: urlDatabase};
-    return res.render("urls_index", templateVars);
+    res.redirect("/login");
   }
-
 });
 
-//getting any responce to route urls/news and rendering by ejs (for the submition page)
-// app.get("/urls/new", (req, res) => {
-//   const id = req.cookies.user_id;
-//   const user = users[id];
-
-//   const templateVars = {user};
-//   res.render("urls_new", templateVars);
-// });
-
-app.get("/urls/new", (req, res) => {
-  const userID = req.cookies.user_id;
-  const user = getUserById(userID, users);
-  if (user === null) {
-    return res.redirect("/login");
-  }
-  const templateVars = {
-    urls: urlDatabase,
-    user: users[userID],
-  };
-  res.render("urls_new", templateVars);
-});
-
-// app.get("/", (req, res) => {
-//   res.send("This is our home page, Welcome!");
-// });
-// app.get("/urls.json", (req, res) => {
-//   res.json(urlDatabase);
-// });
-// app.get("/hello", (req, res) => {
-//   res.send(`<html><body><h1>This is our home page</h1><br><h3><i>Welcome!</i></h3></body></html>\n`);
-// });
-
-// this is for redirecting from POST route to this page to show the user the short links
-
-app.get("/urls/:id", (req, res) => {
-  const id = req.cookies.user_id;
-  const user = users[id];
-  console.log("------------>>", req.params.id);
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id], user: user};
-  res.render("urls_show", templateVars);
-});
-
-// inside the urls_show.ejs it is defined in the anchor link that by click on the shortURLs it should go to the /u/:id. and inside of this we define that it should redirect to the longURL
-
-app.get("/u/:id", (req, res) => {
-  if (req.params.id) {
-    const longURL = urlDatabase[req.params.id];
-    res.redirect(longURL);
-    return;
-  }
-  res.status(400).send("To see the urls, you have to first login");
-  return;
-});
-
+// register page
 app.get("/register", (req,res) => {
-  let templateVars = {user: null};
+  const templateVars = {user: null};
   res.render("urls_register", templateVars);
 });
 
-app.get("/login", (req,res) => {
-  let templateVars = {user: null};
-  res.render("urls_login", templateVars);
-});
-
-
-
-/***********   ROUTS : POSTS */
-/*************************** */
-
-//by clicking on the Submit button we use from these things :action, name and method to post our reqest and implement functions and store the shortURL and redirect to /urls/:id
-app.post("/urls", (req, res) => {
-  const shortURL = getRandomString();
-  const userID = req.cookies.user_id;
-  const user = getUserById(userID, users);
-  if (user) {
-    urlDatabase[shortURL] = req.body.longURL,
-    res.redirect(`/urls/${shortURL}`);
-    return;
-  } else {
-    res.status(400).send("To see the urls, you have to first login");
-    return;
-  }
-});
-
-app.post("/urls/:shortURL/delete",(req,res) =>{
-  delete urlDatabase[req.params.shortURL];
-  res.redirect(`/urls`);
-});
-
-app.post("/urls/:id", (req, res) => {
-  const id = req.params.id;
-  let longURL = req.body.longURL;
-  urlDatabase[id] = longURL;
-  res.redirect(`/urls`);
-});
-
-// a post to handle the login form value
-app.post("/login",(req,res) => {
-  
-  let email = req.body.email;
-  let password = req.body.password;
-  
-  for (let key in users) {
-    if (email === users[key].email && password === users[key].password) {
-      res.cookie("user_id",users[key].id);   //by setting this we can find the user_id under chrome Devtools:Application:Cookies
-      res.redirect("/urls");
-      return;
-    }
-  }
-  res.status(403).send("Either your email address or your password is incorrect!");
-  
-});
-
-// a post to handle the logout form in the header
-app.post("/logout", (req, res) => {
-  res.clearCookie('user_id');
-  res.redirect("/login");
-});
-
+//registration validation, adding the information of user to the user list
+//reading the user information with (req.body)  AND   sending the information to the cookie with (res.cookie) and redirect to /urls
 app.post("/register",(req,res) => {
   let email = req.body.email;
   let password = req.body.password;
@@ -180,6 +66,174 @@ app.post("/register",(req,res) => {
   res.status(400).send("This email already exists. Either please log in with or choose another email address.");
 });
 
+// login page
+app.get("/login", (req,res) => {
+  let templateVars = {user: null};
+  res.render("urls_login", templateVars);
+});
+
+// a post to handle the login form value
+app.post("/login",(req,res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+  const userID = getUserByEmail(email, users);
+  if (!email || !password) {
+    return res.status(400).send("Please enter a valid email and valid password");
+  }
+  if (userID === null) {
+    return res.status(400).send("Your email is not in registered in this website!");
+  }
+  for (let key in users) {
+    if (email === users[key].email && password === users[key].password) {
+      res.cookie("user_id",users[key].id);   //by setting this we can find the user_id under chrome Devtools:Application:Cookies
+      res.redirect("/urls");
+      return;
+    }
+  }
+  res.status(403).send("Either your email address or your password is incorrect!");
+});
+
+// a post to handle the logout form in the header
+app.post("/logout", (req, res) => {
+  res.clearCookie('user_id');
+  res.redirect("/login");
+});
+
+//a page for showing the urls
+app.get("/urls", (req, res) => {
+  const userID = req.cookies.user_id;
+  const usersURLs = urlsForUser(userID, urlDatabase);
+  const user = getUserById(userID, users);
+  if (!user) {
+    return res.redirect("/login");
+  } else {
+    const templateVars = {
+      urls: usersURLs,
+      user: users[userID],
+    };
+    return res.render("urls_index", templateVars);
+  }
+});
+
+//by clicking on the Submit button we use from these things :action, name and method to post our reqest and implement functions and store the shortURL and redirect to /urls/:id
+app.post("/urls", (req, res) => {
+  const shortURL = getRandomString();
+  const userID = req.cookies.user_id;
+  const user = getUserById(userID, users);
+  if (user) {
+    urlDatabase[shortURL] = {
+      userID: userID,
+      longURL: req.body.longURL,
+    };
+    console.log("=======>>>> ", urlDatabase);
+    res.redirect(`/urls/${shortURL}`);
+    return;
+  } else {
+    res.status(400).send("To see the urls, you have to first login");
+    return;
+  }
+});
+
+//getting any responce to route urls/news and rendering by ejs (for the submition page)
+app.get("/urls/new", (req, res) => {
+  const userID = req.cookies.user_id;
+  const user = getUserById(userID, users);
+  if (user === null) {
+    return res.redirect("/login");
+  }
+  const templateVars = {urls: urlDatabase, user: users[userID]};
+  res.render("urls_new", templateVars);
+});
+
+// inside the urls_show.ejs it is defined in the anchor link that by click on the shortURLs it should go to the /u/:id. and inside of this we define that it should redirect to the longURL
+
+app.get("/u/:id", (req, res) => {
+  if (req.params.id) {
+    const longURL = urlDatabase[req.params.id].longURL;
+    res.redirect(longURL);
+    return;
+  }
+  res.status(400).send("This Link is not reachable!");
+  return;
+});
+
+// this is for redirecting from POST route to this page to show the user short links
+app.get("/urls/:id", (req, res) => {
+  let templateVars = {};
+  const userID = req.cookies.user_id;
+
+  if (userID) {
+    const userURLs = urlsForUser(userID, urlDatabase);
+    const shortURL = req.params.id;
+    if (userURLs[shortURL]) {
+      const longURL = urlDatabase[shortURL].longURL;
+      templateVars.user = users[userID];
+      templateVars.longURL = longURL;
+      templateVars.shortURL = shortURL;
+    } else {
+      templateVars.user = users[userID];
+      templateVars.shortURL = null;
+    }
+  }
+  res.render("urls_show", templateVars);
+});
+
+app.post("/urls/:id", (req, res) => {
+  const userID = req.cookies.user_id;
+  if (!userID) {
+    return res.status(400).send("You may not logged in!");
+  } else {
+    const userURLs = urlsForUser(userID, urlDatabase);
+    const targetUserURLS = userURLs[req.params.id];
+    if (targetUserURLS) {
+      urlDatabase[req.params.id].longURL = req.body.longURL;
+      res.redirect("/urls");
+    } else {
+      return res.status(400).send("You may not logged in!");
+    }
+  }
+});
+
+app.post("/urls/:id/delete", (req, res) => {
+  const userID = req.cookies.user_id;
+  if (!userID) {
+    return res.status(400).send("You are only allowed to delete your own URLs!");
+  } else {
+    const userURLs = urlsForUser(userID, urlDatabase);
+    if (userURLs[req.params.id]) {
+      delete urlDatabase[req.params.id];
+      res.redirect("/urls");
+    } else {
+      return res.status(400).send("You are only allowed to delete your own URLs!");
+    }
+  }
+});
+
+/***********   ROUTS : POSTS */
+/*************************** */
+
+app.post("/urls/:id/delete",(req,res) =>{
+  delete urlDatabase[req.params.id];
+  res.redirect(`/urls`);
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 app.listen(PORT, (req, res) =>{
   console.log(`The port is : ${PORT}`);
 });
+
+
